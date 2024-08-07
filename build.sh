@@ -1,5 +1,10 @@
 #!/bin/bash
 set -eu
+echo $AWS_PROFILE
+echo $PACKAGE
+echo $ACCOUNTID
+echo $DOMAIN
+echo $REPO
 
 ## cleanup
 rm -rf build/
@@ -17,8 +22,19 @@ cat pyproject.toml | perl -ne "\$_ =~ s/python-dummy/$PACKAGE/g; print \$_;" > b
 
 echo -e '\n\n### Creating package build environment ###'
 cd build/$PACKAGE
+rm -rf .venv
 python -m venv .venv
 source .venv/*/activate
 python -m pip install --upgrade build twine
 echo -e '\n\n### Building package ###'
 python -m build
+
+# setup pypi repo
+echo -e '\n\n### Configuring for codeartifact ###'
+auth_token=$(aws --profile $AWS_PROFILE codeartifact get-authorization-token --domain $DOMAIN --domain-owner $ACCOUNTID --query authorizationToken --output text)
+repo_url=$(aws --profile $AWS_PROFILE codeartifact get-repository-endpoint --domain $DOMAIN --domain-owner $ACCOUNTID --repository $REPO --format pypi --query repositoryEndpoint --output text)
+export TWINE_USERNAME=aws
+export TWINE_PASSWORD=$auth_token
+export TWINE_REPOSITORY_URL=$repo_url
+
+python -m twine upload --verbose --repository codeartifact dist/*

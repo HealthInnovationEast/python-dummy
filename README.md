@@ -7,19 +7,15 @@ It has no functionality other than to prevent an upstream import of the real pac
 
 ## Usage
 
-From within the python-dummy project execute:
+1. Perform any AWS login necessary (e.g. `aws sso login`)
+1. From within the python-dummy project execute:
+    ```
+    export AWS_PROFILE=<AWS account profile>
+    export PACKAGE=<PACKAGE_NAME_TO_BLOCK>
+    export ACCOUNTID=<aws account containing codeartifact>
+    export DOMAIN=<codeartifact domain>
+    export REPO=<codeartifact repo>
+    bash build.sh
+    ```
 
-```
-export PACKAGE=<PACKAGE_NAME_TO_BLOCK>
-bash build.sh
-```
-
-The dummy package is automatically created and built and can be found under `build/`.  This can then be uploaded using
-twine to CodeArtifact (or another system).
-
-These commands are specific to AWS CodeArtifact:
-
-```
-cd build/$PACKAGE
-aws codeartifact login --tool twine --domain my_domain --domain-owner 111122223333 --repository my_repo
-python -m twine upload --repository codeartifact dist/*
+The dummy package is automatically created, built and submitted to the specified codeartifact repo
