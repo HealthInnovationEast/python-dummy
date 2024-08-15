@@ -1,10 +1,14 @@
 #!/bin/bash
 set -eu
-echo $AWS_PROFILE
-echo $PACKAGE
-echo $ACCOUNTID
-echo $DOMAIN
-echo $REPO
+
+echo "AWS_PROFILE: $AWS_PROFILE"
+echo "PACKAGE: $PACKAGE"
+echo "DOMAIN: $DOMAIN"
+echo "REPO: $REPO"
+
+echo -e "\nDetermining account ID..."
+ACCOUNTID=$(aws sts get-caller-identity --query Account --output text | head -n 1)
+echo "Account ID: $ACCOUNTID"
 
 ## cleanup
 rm -rf build/
@@ -30,11 +34,15 @@ echo -e '\n\n### Building package ###'
 python -m build
 
 # setup pypi repo
-echo -e '\n\n### Configuring for codeartifact ###'
+echo -e '\n\n### Getting codeartifact details ###'
 auth_token=$(aws --profile $AWS_PROFILE codeartifact get-authorization-token --domain $DOMAIN --domain-owner $ACCOUNTID --query authorizationToken --output text)
 repo_url=$(aws --profile $AWS_PROFILE codeartifact get-repository-endpoint --domain $DOMAIN --domain-owner $ACCOUNTID --repository $REPO --format pypi --query repositoryEndpoint --output text)
+
+echo -e '\n\n### Uploading to CodeArtifact using twine ###'
 export TWINE_USERNAME=aws
 export TWINE_PASSWORD=$auth_token
 export TWINE_REPOSITORY_URL=$repo_url
-
 python -m twine upload --verbose --repository codeartifact dist/*
+
+echo -e '\n\n### Cleaning up ###'
+rm -rf build

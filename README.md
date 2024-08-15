@@ -12,7 +12,6 @@ It has no functionality other than to prevent an upstream import of the real pac
     ```
     export AWS_PROFILE=<AWS account profile>
     export PACKAGE=<PACKAGE_NAME_TO_BLOCK>
-    export ACCOUNTID=<aws account containing codeartifact>
     export DOMAIN=<codeartifact domain>
     export REPO=<codeartifact repo>
     bash build.sh
